@@ -1,0 +1,113 @@
+{
+  "id": "enrichlayer_data_enrichment",
+  "title": "EnrichLayer Data Enrichment",
+  "version": "1.0.0",
+  "author": "Andrew Mayfield",
+  "description": "Access 1.2B+ professional profiles and 50M+ company records for B2B data enrichment",
+  "overviewMarkdown": "## EnrichLayer Data Enrichment\n\nAccess 1.2B+ professional profiles and 50M+ company records for B2B data enrichment.\n\n### Available Functions:\n- **Person Profile**: Get detailed LinkedIn profile data\n- **Company Profile**: Get comprehensive company information\n- **Person Lookup**: Find LinkedIn profiles by name and company\n\n### Setup:\n1. Get your API key from [EnrichLayer Dashboard](https://enrichlayer.com/dashboard)\n2. Enter it in the plugin settings\n\n### Usage Examples:\n- \"Enrich the profile https://www.linkedin.com/in/williamhgates\"\n- \"Get company information for https://www.linkedin.com/company/microsoft\"\n- \"Find the LinkedIn profile for Satya Nadella at Microsoft\"\n\n### Costs:\n- Person Profile: 1 credit\n- Company Profile: 1 credit (+ extra for premium data)\n- Person Lookup: 2 credits\n\n**Rate Limit**: 300 requests/minute (standard accounts)\n\n### API Documentation:\nhttps://enrichlayer.com/docs/pc/",
+  "userSettings": [
+    {
+      "name": "apiKey",
+      "label": "EnrichLayer API Key",
+      "type": "password",
+      "description": "Get your API key from https://enrichlayer.com/dashboard"
+    }
+  ],
+  "functions": [
+    {
+      "name": "enrichlayer_person_profile",
+      "description": "Get comprehensive professional profile data from a LinkedIn profile URL, including work history, education, skills, and certifications.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "profile_url": {
+            "type": "string",
+            "description": "The full LinkedIn profile URL (e.g., https://www.linkedin.com/in/williamhgates)"
+          },
+          "extra": {
+            "type": "string",
+            "enum": ["include", "exclude"],
+            "description": "Include extra enrichment data. Default: exclude"
+          }
+        },
+        "required": ["profile_url"],
+        "additionalProperties": false
+      },
+      "strict": true,
+      "implementation": {
+        "type": "javascript",
+        "outputType": "render_markdown",
+        "code": "async function enrichlayer_person_profile(params, userSettings) {\n  const { profile_url, extra = 'exclude' } = params;\n  const { apiKey } = userSettings;\n  \n  if (!apiKey) {\n    throw new Error('API key is required. Please configure it in plugin settings.');\n  }\n  \n  const url = `https://enrichlayer.com/api/v2/profile?url=${encodeURIComponent(profile_url)}&extra=${extra}&use_cache=if-present`;\n  \n  const response = await fetch(url, {\n    method: 'GET',\n    headers: {\n      'Authorization': `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    }\n  });\n  \n  if (!response.ok) {\n    const errorText = await response.text();\n    throw new Error(`EnrichLayer API error: ${response.status} - ${errorText}`);\n  }\n  \n  const data = await response.json();\n  \n  let markdown = `# ${data.full_name || 'Profile'}\\n\\n`;\n  \n  if (data.occupation) {\n    markdown += `**Current Role:** ${data.occupation}\\n\\n`;\n  }\n  \n  if (data.city || data.country_full_name) {\n    markdown += `**Location:** ${data.city || ''}${data.state ? ', ' + data.state : ''}${data.country_full_name ? ', ' + data.country_full_name : ''}\\n\\n`;\n  }\n  \n  if (data.headline) {\n    markdown += `**Headline:** ${data.headline}\\n\\n`;\n  }\n  \n  if (data.summary) {\n    markdown += `## Summary\\n${data.summary}\\n\\n`;\n  }\n  \n  if (data.experiences && data.experiences.length > 0) {\n    markdown += `## Professional Experience\\n\\n`;\n    data.experiences.slice(0, 5).forEach(exp => {\n      markdown += `- **${exp.title}** at ${exp.company}\\n`;\n      if (exp.starts_at) {\n        markdown += `  - ${exp.starts_at.month || ''}/${exp.starts_at.year || ''}`;\n        if (exp.ends_at) {\n          markdown += ` - ${exp.ends_at.month}/${exp.ends_at.year}`;\n        } else {\n          markdown += ` - Present`;\n        }\n        markdown += `\\n`;\n      }\n    });\n    markdown += `\\n`;\n  }\n  \n  if (data.education && data.education.length > 0) {\n    markdown += `## Education\\n\\n`;\n    data.education.forEach(edu => {\n      markdown += `- **${edu.school}**\\n`;\n      if (edu.degree_name) {\n        markdown += `  - ${edu.degree_name}`;\n        if (edu.field_of_study) markdown += ` in ${edu.field_of_study}`;\n        markdown += `\\n`;\n      }\n      if (edu.starts_at) {\n        markdown += `  - ${edu.starts_at.year}`;\n        if (edu.ends_at) markdown += ` - ${edu.ends_at.year}`;\n        markdown += `\\n`;\n      }\n    });\n    markdown += `\\n`;\n  }\n  \n  if (data.languages && data.languages.length > 0) {\n    markdown += `## Languages\\n${data.languages.join(', ')}\\n\\n`;\n  }\n  \n  markdown += `---\\n**LinkedIn:** [View Profile](${profile_url})`;\n  \n  return markdown;\n}"
+      }
+    },
+    {
+      "name": "enrichlayer_company_profile",
+      "description": "Get comprehensive company information from a LinkedIn company URL, including size, locations, funding, industry classification, and specialties.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "company_url": {
+            "type": "string",
+            "description": "The full LinkedIn company profile URL (e.g., https://www.linkedin.com/company/microsoft)"
+          },
+          "funding_data": {
+            "type": "string",
+            "enum": ["include", "exclude"],
+            "description": "Include funding rounds information. Costs 1 additional credit. Default: exclude"
+          },
+          "extra": {
+            "type": "string",
+            "enum": ["include", "exclude"],
+            "description": "Include extra enrichment data. Costs 1 additional credit. Default: exclude"
+          }
+        },
+        "required": ["company_url"],
+        "additionalProperties": false
+      },
+      "strict": true,
+      "implementation": {
+        "type": "javascript",
+        "outputType": "render_markdown",
+        "code": "async function enrichlayer_company_profile(params, userSettings) {\n  const { company_url, funding_data = 'exclude', extra = 'exclude' } = params;\n  const { apiKey } = userSettings;\n  \n  if (!apiKey) {\n    throw new Error('API key is required. Please configure it in plugin settings.');\n  }\n  \n  const url = `https://enrichlayer.com/api/v2/company?url=${encodeURIComponent(company_url)}&funding_data=${funding_data}&extra=${extra}&use_cache=if-present`;\n  \n  const response = await fetch(url, {\n    method: 'GET',\n    headers: {\n      'Authorization': `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    }\n  });\n  \n  if (!response.ok) {\n    const errorText = await response.text();\n    throw new Error(`EnrichLayer API error: ${response.status} - ${errorText}`);\n  }\n  \n  const data = await response.json();\n  \n  let markdown = `# ${data.name || 'Company'}\\n\\n`;\n  \n  if (data.tagline) {\n    markdown += `*${data.tagline}*\\n\\n`;\n  }\n  \n  if (data.industry) {\n    markdown += `**Industry:** ${data.industry}\\n\\n`;\n  }\n  \n  if (data.website) {\n    markdown += `**Website:** ${data.website}\\n\\n`;\n  }\n  \n  if (data.description) {\n    markdown += `## About\\n${data.description}\\n\\n`;\n  }\n  \n  markdown += `## Company Details\\n\\n`;\n  \n  if (data.company_size_on_linkedin) {\n    markdown += `- **Company Size:** ${data.company_size_on_linkedin} employees on LinkedIn\\n`;\n  }\n  \n  if (data.company_type) {\n    markdown += `- **Type:** ${data.company_type}\\n`;\n  }\n  \n  if (data.founded_year) {\n    markdown += `- **Founded:** ${data.founded_year}\\n`;\n  }\n  \n  if (data.hq) {\n    markdown += `- **Headquarters:** ${data.hq.line_1 || ''}`;\n    if (data.hq.city) markdown += `, ${data.hq.city}`;\n    if (data.hq.state) markdown += `, ${data.hq.state}`;\n    if (data.hq.country) markdown += ` ${data.hq.country}`;\n    markdown += `\\n`;\n  }\n  \n  if (data.follower_count) {\n    markdown += `- **Followers:** ${data.follower_count.toLocaleString()}\\n`;\n  }\n  \n  markdown += `\\n`;\n  \n  if (data.specialities && data.specialities.length > 0) {\n    markdown += `**Specialties:** ${data.specialities.join(', ')}\\n\\n`;\n  }\n  \n  if (data.funding_data && data.funding_data.length > 0) {\n    markdown += `## Funding\\n\\n`;\n    data.funding_data.forEach(round => {\n      markdown += `- **${round.funding_type}**: $${round.money_raised?.toLocaleString() || 'N/A'}`;\n      if (round.announced_date) {\n        markdown += ` (${round.announced_date.month}/${round.announced_date.year})`;\n      }\n      markdown += `\\n`;\n    });\n    markdown += `\\n`;\n  }\n  \n  markdown += `---\\n**LinkedIn:** [View Profile](${company_url})`;\n  \n  return markdown;\n}"
+      }
+    },
+    {
+      "name": "enrichlayer_person_lookup",
+      "description": "Find a person's LinkedIn profile URL by searching with their name and optionally their company domain or location.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "description": "The person's first name"
+          },
+          "last_name": {
+            "type": "string",
+            "description": "The person's last name"
+          },
+          "company_domain": {
+            "type": "string",
+            "description": "The company domain (e.g., microsoft.com). Optional but improves accuracy."
+          },
+          "location": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code (e.g., 'us', 'uk'). Optional."
+          },
+          "enrich_profile": {
+            "type": "string",
+            "enum": ["enrich", "skip"],
+            "description": "Return full profile data or just URL. Default: skip"
+          }
+        },
+        "required": ["first_name", "last_name"],
+        "additionalProperties": false
+      },
+      "strict": true,
+      "implementation": {
+        "type": "javascript",
+        "outputType": "render_markdown",
+        "code": "async function enrichlayer_person_lookup(params, userSettings) {\n  const { first_name, last_name, company_domain = '', location = '', enrich_profile = 'skip' } = params;\n  const { apiKey } = userSettings;\n  \n  if (!apiKey) {\n    throw new Error('API key is required. Please configure it in plugin settings.');\n  }\n  \n  let url = `https://enrichlayer.com/api/v2/person/lookup?first_name=${encodeURIComponent(first_name)}&last_name=${encodeURIComponent(last_name)}&enrich_profile=${enrich_profile}`;\n  \n  if (company_domain) {\n    url += `&company_domain=${encodeURIComponent(company_domain)}`;\n  }\n  if (location) {\n    url += `&location=${encodeURIComponent(location)}`;\n  }\n  \n  const response = await fetch(url, {\n    method: 'GET',\n    headers: {\n      'Authorization': `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    }\n  });\n  \n  if (!response.ok) {\n    const errorText = await response.text();\n    throw new Error(`EnrichLayer API error: ${response.status} - ${errorText}`);\n  }\n  \n  const data = await response.json();\n  \n  if (!data.url) {\n    let markdown = `# No Profile Found\\n\\n`;\n    markdown += `Could not find a LinkedIn profile for **${first_name} ${last_name}**`;\n    if (company_domain) markdown += ` at ${company_domain}`;\n    markdown += `.\\n\\n`;\n    markdown += `Try:\\n- Checking the spelling\\n- Using a different company domain\\n- Providing location information`;\n    return markdown;\n  }\n  \n  let markdown = `# Found Profile\\n\\n`;\n  markdown += `**LinkedIn URL:** [${data.url}](${data.url})\\n\\n`;\n  \n  if (data.profile) {\n    markdown += `**Name:** ${data.profile.full_name}\\n`;\n    if (data.profile.occupation) {\n      markdown += `**Current Role:** ${data.profile.occupation}\\n`;\n    }\n    if (data.profile.city || data.profile.country) {\n      markdown += `**Location:** ${data.profile.city || ''}`;\n      if (data.profile.state) markdown += `, ${data.profile.state}`;\n      if (data.profile.country) markdown += `, ${data.profile.country}`;\n      markdown += `\\n`;\n    }\n    if (data.profile.headline) {\n      markdown += `\\n**Headline:** ${data.profile.headline}\\n`;\n    }\n  }\n  \n  return markdown;\n}"
+      }
+    }
+  ]
+}
