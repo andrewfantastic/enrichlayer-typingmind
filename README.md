@@ -10,16 +10,9 @@ Access 1.2B+ professional profiles and 50M+ company records directly from Typing
 
 ## Installation
 
-### Method 1: Import from GitHub
 1. In TypingMind, go to Plugins
 2. Click "Import from URL"
-3. Paste: `https://github.com/YOUR-USERNAME/enrichlayer-typingmind/blob/main/plugin.json`
-
-### Method 2: Import Raw URL
-Use this direct link:
-```
-https://raw.githubusercontent.com/YOUR-USERNAME/enrichlayer-typingmind/main/plugin.json
-```
+3. Paste: `https://github.com/andrewfantastic/enrichlayer-typingmind`
 
 ## Setup
 
@@ -55,7 +48,7 @@ Full API documentation: https://enrichlayer.com/docs/pc/
 
 For issues or questions:
 - EnrichLayer API: https://enrichlayer.com
-- Plugin Issues: [Create an issue](https://github.com/YOUR-USERNAME/enrichlayer-typingmind/issues)
+- Plugin Issues: [Create an issue](https://github.com/andrewfantastic/enrichlayer-typingmind/issues)
 
 ## License
 
