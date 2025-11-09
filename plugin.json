@@ -1,134 +1,46 @@
 {
-  "id": "enrichlayer_data_enrichment",
-  "title": "EnrichLayer Data Enrichment",
+  "id": "enrichlayer_person_profile",
+  "title": "EnrichLayer Person Profile",
   "version": "1.0.0",
   "author": "Andrew Mayfield",
-  "description": "Use EnrichLayer's API for B2B data enrichment",
-  "overviewMarkdown": "## EnrichLayer Data Enrichment\n\n### Available Functions:\n- **Person Profile**: Get detailed LinkedIn profile data\n- **Company Profile**: Get comprehensive company information\n- **Person Lookup**: Find LinkedIn profiles by name and company\n\n### Setup:\n1. Get your API key from [EnrichLayer Dashboard](https://enrichlayer.com/dashboard)\n2. Enter it in the plugin settings\n\n### Usage Examples:\n- \"Enrich the profile https://www.linkedin.com/in/williamhgates\"\n- \"Get company information for https://www.linkedin.com/company/microsoft\"\n- \"Find the LinkedIn profile for Satya Nadella at Microsoft\"\n\n### Costs:\n- Person Profile: 1 credit\n- Company Profile: 1 credit (+ extra for premium data)\n- Person Lookup: 2 credits\n\n**Rate Limit**: 300 requests/minute (standard accounts)\n\n### API Documentation:\nhttps://enrichlayer.com/docs/pc/",
+  "description": "Get detailed LinkedIn profile data using EnrichLayer API",
+  "overviewMarkdown": "## EnrichLayer Person Profile\n\nGet comprehensive professional profile data from LinkedIn URLs including work history, education, skills, and certifications.\n\n### Setup:\n1. Get your API key from [EnrichLayer Dashboard](https://enrichlayer.com/dashboard)\n2. Enter it in the plugin settings\n\n### Usage:\n\"Enrich the profile https://www.linkedin.com/in/williamhgates\"\n\n### Cost: 1-2 credits per request",
   "userSettings": [
     {
       "name": "apiKey",
       "label": "EnrichLayer API Key",
       "type": "password",
+      "required": true,
       "description": "Get your API key from https://enrichlayer.com/dashboard"
     }
   ],
-  "pluginFunctions": [
-    {
-      "id": "enrich_person_profile",
-      "title": "Enrich Person Profile",
-      "implementationType": "http",
-      "openaiSpec": {
-        "type": "function",
-        "name": "enrichlayer_person_profile",
-        "description": "Get comprehensive professional profile data from a LinkedIn profile URL, including work history, education, skills, and certifications.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "profile_url": {
-              "type": "string",
-              "description": "The full LinkedIn profile URL (e.g., https://www.linkedin.com/in/williamhgates)"
-            },
-            "extra": {
-              "type": "string",
-              "enum": ["include", "exclude"],
-              "description": "Include extra enrichment data. Default: exclude"
-            }
-          },
-          "required": ["profile_url"],
-          "additionalProperties": false
+  "openaiSpec": {
+    "name": "enrichlayer_person_profile",
+    "description": "Get comprehensive professional profile data from a LinkedIn profile URL, including work history, education, skills, and certifications.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "profile_url": {
+          "type": "string",
+          "description": "The full LinkedIn profile URL (e.g., https://www.linkedin.com/in/williamhgates)"
         },
-        "strict": true
-      },
-      "httpAction": {
-        "method": "GET",
-        "url": "https://enrichlayer.com/api/v2/profile?url={profile_url}&extra={extra|exclude}&use_cache=if-present",
-        "requestHeaders": {
-          "Authorization": "Bearer {apiKey}",
-          "Content-Type": "application/json"
+        "extra": {
+          "type": "string",
+          "enum": ["include", "exclude"],
+          "description": "Include extra enrichment data (costs 1 additional credit). Default: exclude"
         }
       },
-      "outputType": "respond_to_ai"
-    },
-    {
-      "id": "enrich_company_profile",
-      "title": "Enrich Company Profile",
-      "implementationType": "http",
-      "openaiSpec": {
-        "type": "function",
-        "name": "enrichlayer_company_profile",
-        "description": "Get comprehensive company information from a LinkedIn company URL, including size, locations, funding, industry classification, and specialties.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "company_url": {
-              "type": "string",
-              "description": "The full LinkedIn company profile URL (e.g., https://www.linkedin.com/company/microsoft)"
-            },
-            "funding_data": {
-              "type": "string",
-              "enum": ["include", "exclude"],
-              "description": "Include funding rounds information. Costs 1 additional credit. Default: exclude"
-            },
-            "extra": {
-              "type": "string",
-              "enum": ["include", "exclude"],
-              "description": "Include extra enrichment data. Costs 1 additional credit. Default: exclude"
-            }
-          },
-          "required": ["company_url"],
-          "additionalProperties": false
-        },
-        "strict": true
-      },
-      "httpAction": {
-        "method": "GET",
-        "url": "https://enrichlayer.com/api/v2/company?url={company_url}&funding_data={funding_data|exclude}&extra={extra|exclude}&use_cache=if-present",
-        "requestHeaders": {
-          "Authorization": "Bearer {apiKey}",
-          "Content-Type": "application/json"
-        }
-      },
-      "outputType": "respond_to_ai"
-    },
-    {
-      "id": "find_person_profile",
-      "title": "Find Person Profile",
-      "implementationType": "http",
-      "openaiSpec": {
-        "type": "function",
-        "name": "enrichlayer_person_lookup",
-        "description": "Find a person's LinkedIn profile URL by searching with their name and company domain.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "first_name": {
-              "type": "string",
-              "description": "The person's first name"
-            },
-            "last_name": {
-              "type": "string",
-              "description": "The person's last name"
-            },
-            "company_domain": {
-              "type": "string",
-              "description": "The company domain (e.g., microsoft.com, google.com)"
-            }
-          },
-          "required": ["first_name", "last_name", "company_domain"],
-          "additionalProperties": false
-        },
-        "strict": true
-      },
-      "httpAction": {
-        "method": "GET",
-        "url": "https://enrichlayer.com/api/v2/profile/resolve?first_name={first_name}&last_name={last_name}&company_domain={company_domain}",
-        "requestHeaders": {
-          "Authorization": "Bearer {apiKey}",
-          "Content-Type": "application/json"
-        }
-      },
-      "outputType": "respond_to_ai"
+      "required": ["profile_url"]
     }
-  ]
+  },
+  "httpAction": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "method": "GET",
+    "name": "",
+    "url": "https://enrichlayer.com/api/v2/profile?url={profile_url}&extra={extra|exclude}&use_cache=if-present",
+    "requestHeaders": "{\"authorization\": \"Bearer {apiKey}\"}",
+    "hasHeaders": true
+  },
+  "implementationType": "http",
+  "outputType": "respond_to_ai"
 }
